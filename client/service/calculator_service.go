@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type CalculatorService interface {
@@ -21,7 +23,8 @@ func NewCalculatorService(calculatorClient CalculatorClient) CalculatorService {
 
 func (c calculatorService) Hello(name string) error {
 	req := HelloRequest{
-		Name: name,
+		Name:        name,
+		CreatedDate: timestamppb.Now(),
 	}
 
 	// ใช้ calculatorClient เพื่อส่ง msg ไปให้กับ server และเพื่อรอ resp กลับมา

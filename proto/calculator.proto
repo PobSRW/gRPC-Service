@@ -1,17 +1,36 @@
 syntax = "proto3";
 
-package service;
+import "gender.proto";
 
+// import lib timestamp
+// from => https://github.com/protocolbuffers/protobuf/tree/main/src/google/protobuf
+import "google/protobuf/timestamp.proto";
+
+package service;
 option go_package = "./service";
 
+// ถ้ามี service จะสามารถ gen file => _grpc.pb.go ได้
 service Calculator {
   rpc Hello(HelloRequest) returns (HelloResponse);
 }
 
+// ถ้ามี message หรือ enum จะสามารถ gen file => .pb.go ได้
 message HelloRequest {
   string name = 1;
+  google.protobuf.Timestamp created_date = 2;
 }
 
 message HelloResponse {
   string result = 1;
+}
+
+message Person {
+  string name = 1;
+  int32 age = 2;
+  Gender gender = 3;
+  repeated string phone_number = 4;
+  map<string,string> countries = 5;
+  // google.protobuf => คือชื่อ package จาก lib
+  // ref => https://github.com/protocolbuffers/protobuf/blob/main/src/google/protobuf/timestamp.proto
+  google.protobuf.Timestamp created_date = 6;
 }
