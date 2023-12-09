@@ -1,19 +1,38 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"obp-gRPC-client/service"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 )
 
 func main() {
 
-	creds := insecure.NewCredentials()
+	var cc *grpc.ClientConn
+	var err error
+	var creds credentials.TransportCredentials
 
-	cc, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(creds))
+	host := flag.String("host", "localhost:50051", "gRPC Server host")
+	tls := flag.Bool("tls", false, "use a secure TLS connection")
+	flag.Parse()
+
+	if *tls {
+		cretFile := "../tls/ca.crt"
+		creds, err = credentials.NewClientTLSFromFile(cretFile, "")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+	} else {
+		creds = insecure.NewCredentials()
+	}
+
+	cc, err = grpc.Dial(*host, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,7 +42,7 @@ func main() {
 	calculatorClient := service.NewCalculatorClient(cc)
 	calculatorService := service.NewCalculatorService(calculatorClient)
 
-	err = calculatorService.Hello("")
+	err = calculatorService.Hello("Pob")
 	// err = calculatorService.Fibonacci(7)
 	// err = calculatorService.Average(1, 2, 3, 4, 6)
 	// err = calculatorService.Sum(1, 2, 3, 4, 5)
