@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -12,7 +13,8 @@ import (
 type CalculatorService interface {
 	Hello(name string) error
 	Fibonacci(n uint32) error
-	Average(number ...float64) error
+	Average(numbers ...float64) error
+	Sum(numbers ...int32) error
 }
 
 // service ตัวนี้ทำงานเองไม่ได้
@@ -106,4 +108,62 @@ func (c calculatorService) Average(numbers ...float64) error {
 	fmt.Printf("Response %v\n", resp.Result)
 
 	return nil
+}
+
+func (c calculatorService) Sum(numbers ...int32) error {
+	stream, err := c.calculatorClient.Sum(context.Background())
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Service Sum\n")
+
+	// ประกอบด้วย 2 ส่วนคือ 1.send req 2.recv resp
+	// แนะนำให้แยกออกจากกัน
+
+	// 1.send req => ใช้ stream ส่งไปให้ server
+	go func() {
+		for _, number := range numbers {
+			req := SumRequest{
+				Number: number,
+			}
+			stream.Send(&req)
+			fmt.Printf("Request: %v\n", req.Number)
+
+			// หน่วงเวลาไว้ดูหน่อย
+			time.Sleep(time.Second)
+		}
+
+		// พอหมด numbers ต้องบอก server ด้วยว่าจะไม่ส่งอะไรไปแล้วนะจ้ะ
+		stream.CloseSend()
+	}()
+
+	done := make(chan bool)
+	errs := make(chan error)
+
+	// 2.recv res => ไว้รับค่า stream จาก server
+	go func() {
+		// ฝั่ง res ไม่รู้ว่าจบเมื่อไร จึงต้องวนลูปไม่รู้จบ
+		for {
+			resp, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				errs <- err
+			}
+			fmt.Printf("Response %v\n", resp.Result)
+			fmt.Println("--------------------------")
+		}
+		done <- true
+	}()
+
+	// ใช้ channel เพื่อให้รอให้ func ทำงานให้จบ
+	select {
+	case <-done:
+		log.Println("Done")
+		return nil
+	case err := <-errs:
+		return err
+	}
 }

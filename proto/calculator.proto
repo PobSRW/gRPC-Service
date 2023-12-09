@@ -11,11 +11,14 @@ option go_package = "./service";
 
 // ถ้ามี service จะสามารถ gen file => _grpc.pb.go ได้
 service Calculator {
+  // gRPC แบบ unary => send 1 recv 1
   rpc Hello(HelloRequest) returns (HelloResponse);
   // gRPC แบบ server streaming
   rpc Fibonacci(FibonacciRequest) returns (stream FibonacciResponse);
   // gRPC แบบ client streaming
   rpc Average(stream AverageRequest) returns (AverageResponse);
+  // grPC แบบ bi directional streaming
+  rpc Sum(stream SumRequest) returns (stream SumResponse);
 }
 
 // ถ้ามี message หรือ enum จะสามารถ gen file => .pb.go ได้
@@ -55,4 +58,13 @@ message AverageRequest {
 
 message AverageResponse {
   double result = 1;
+}
+
+message SumRequest {
+  int32 number = 1;
+}
+
+
+message SumResponse {
+  int32 result = 1;
 }

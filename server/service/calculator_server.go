@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"io"
 	"time"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type calculatorServer struct{}
@@ -17,8 +20,13 @@ func NewCalculatorServer() CalculatorServer {
 func (calculatorServer) mustEmbedUnimplementedCalculatorServer() {}
 
 func (calculatorServer) Hello(ctx context.Context, req *HelloRequest) (*HelloResponse, error) {
-	result := fmt.Sprintf("Hello %[1]s, at %[2]v", req.Name, req.CreatedDate.AsTime().Local())
 
+	// handle error
+	if req.Name == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "name is required")
+	}
+
+	result := fmt.Sprintf("Hello %[1]s, at %[2]v", req.Name, req.CreatedDate.AsTime().Local())
 	return &HelloResponse{
 		Result: result,
 	}, nil
@@ -72,4 +80,31 @@ func (calculatorServer) Average(stream Calculator_AverageServer) error {
 
 	// SendAndClose = ส่งข้อความและปิด connection
 	return stream.SendAndClose(&resp)
+}
+
+func (calculatorServer) Sum(stream Calculator_SumServer) error {
+	var sum int32 = 0
+
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		// คำนวณแล้วตรวจ resp ทันที เพราะเป็นแบบ bi directional
+		sum += req.Number
+		resp := SumResponse{
+			Result: sum,
+		}
+
+		err = stream.Send(&resp)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

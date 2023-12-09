@@ -1,14 +1,17 @@
 {
   "folders": [
-	{
-		"path": "client"
-	},
-	{
-		"path": "proto"
-	},
-	{
-		"path": "server"
-	}
-],
+    {
+      "path": "client"
+    },
+    {
+      "path": "proto"
+    },
+    {
+      "path": "server"
+    },
+    {
+      "path": "tls"
+    }
+  ],
   "settings": {}
 }
