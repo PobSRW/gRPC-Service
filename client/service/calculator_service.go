@@ -3,12 +3,15 @@ package service
 import (
 	"context"
 	"fmt"
+	"io"
+	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type CalculatorService interface {
 	Hello(name string) error
+	Fibonacci(n uint32) error
 }
 
 // service ตัวนี้ทำงานเองไม่ได้
@@ -36,6 +39,43 @@ func (c calculatorService) Hello(name string) error {
 	fmt.Printf("Service Hello\n")
 	fmt.Printf("Request: %v\n", req.Name)
 	fmt.Printf("Response: %v\n", res.Result)
+
+	return nil
+}
+
+func (c calculatorService) Fibonacci(n uint32) error {
+	req := FibonacciRequest{
+		N: n,
+	}
+
+	// ถ้า stream ที่วิ่งเข้ามาหาเรามันนานเกินไป สามารถตัด connection ทิ้งได้
+	// โดยกำหนด timeout ในการ call service
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	stream, err := c.calculatorClient.Fibonacci(ctx, &req)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Service Fibonacci\n")
+	fmt.Printf("Request: %v\n", req.N)
+
+	// วน loop ไม่รู้จบ เพื่อรับ response
+	for {
+		resp, err := stream.Recv()
+
+		// ถ้าฝั่ง server stream เสร็จแล้ว จะ retrun err มาเป็น io.EOF
+		// EOF = end of file
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Response %v\n", resp.Result)
+	}
 
 	return nil
 }

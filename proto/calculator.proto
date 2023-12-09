@@ -12,6 +12,8 @@ option go_package = "./service";
 // ถ้ามี service จะสามารถ gen file => _grpc.pb.go ได้
 service Calculator {
   rpc Hello(HelloRequest) returns (HelloResponse);
+  // gRPC แบบ server streaming
+  rpc Fibonacci(FibonacciRequest) returns (stream FibonacciResponse);
 }
 
 // ถ้ามี message หรือ enum จะสามารถ gen file => .pb.go ได้
@@ -33,4 +35,13 @@ message Person {
   // google.protobuf => คือชื่อ package จาก lib
   // ref => https://github.com/protocolbuffers/protobuf/blob/main/src/google/protobuf/timestamp.proto
   google.protobuf.Timestamp created_date = 6;
+}
+
+message FibonacciRequest {
+  // ไม่ให้ส่งค่าติดลบ
+  uint32 n = 1;
+}
+
+message FibonacciResponse {
+  uint32 result = 1;
 }
