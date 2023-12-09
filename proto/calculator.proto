@@ -14,6 +14,8 @@ service Calculator {
   rpc Hello(HelloRequest) returns (HelloResponse);
   // gRPC แบบ server streaming
   rpc Fibonacci(FibonacciRequest) returns (stream FibonacciResponse);
+  // gRPC แบบ client streaming
+  rpc Average(stream AverageRequest) returns (AverageResponse);
 }
 
 // ถ้ามี message หรือ enum จะสามารถ gen file => .pb.go ได้
@@ -44,4 +46,13 @@ message FibonacciRequest {
 
 message FibonacciResponse {
   uint32 result = 1;
+}
+
+message AverageRequest {
+  double number = 1;
+}
+
+
+message AverageResponse {
+  double result = 1;
 }

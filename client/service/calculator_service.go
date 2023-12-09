@@ -12,6 +12,7 @@ import (
 type CalculatorService interface {
 	Hello(name string) error
 	Fibonacci(n uint32) error
+	Average(number ...float64) error
 }
 
 // service ตัวนี้ทำงานเองไม่ได้
@@ -76,6 +77,33 @@ func (c calculatorService) Fibonacci(n uint32) error {
 		}
 		fmt.Printf("Response %v\n", resp.Result)
 	}
+
+	return nil
+}
+
+func (c calculatorService) Average(numbers ...float64) error {
+
+	stream, err := c.calculatorClient.Average(context.Background())
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Service Average\n")
+	for _, number := range numbers {
+		req := AverageRequest{
+			Number: number,
+		}
+		stream.Send(&req)
+		fmt.Printf("Request: %v\n", req.Number)
+		time.Sleep(time.Second)
+	}
+
+	//ตอนจบแล้วต้องรับ resp กลับมาด้วย
+	resp, err := stream.CloseAndRecv()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Response %v\n", resp.Result)
 
 	return nil
 }

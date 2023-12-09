@@ -3,6 +3,7 @@ package service
 import (
 	context "context"
 	"fmt"
+	"io"
 	"time"
 )
 
@@ -46,4 +47,29 @@ func fib(n uint32) uint32 {
 	default:
 		return fib(n-1) + fib(n-2)
 	}
+}
+
+func (calculatorServer) Average(stream Calculator_AverageServer) error {
+	var sum, count float64
+
+	// วนแบบ infinity เพราะไม่รู้ว่า client จะ stream มาเท่าไร
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		sum += req.Number
+		count++
+	}
+
+	result := sum / count
+	resp := AverageResponse{
+		Result: result,
+	}
+
+	// SendAndClose = ส่งข้อความและปิด connection
+	return stream.SendAndClose(&resp)
 }
